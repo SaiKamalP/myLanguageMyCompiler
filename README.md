@@ -3,7 +3,7 @@ An attempt to make my own language that works for at least Competitive coding. P
 
 clone the repository
 
-write your code in same directory
+write your code in same directory and name the file "example.txt"
 and run mylangcompiler to get your output into out.cpp
 
 writing code in this language:
