@@ -1,6 +1,103 @@
 #include <bits/stdc++.h>
  
 using namespace std;
+//block class
+class Block{
+    public:
+    vector<Block> subBlocks;
+    vector<string> snippetTokens;
+    char blockStartChar='b';
+    char blockEndChar='d';
+    Block(){
+    }
+    Block(vector<string> &sTokens){
+        snippetTokens=sTokens;
+    }
+};
+
+void generateNestedSubBlocks(Block &block){
+    queue<string> tokensQueue;
+    stack<char> bracketsSatck;
+    auto &blocktokens=block.snippetTokens;
+    int i=0;
+    Block *createdSubBlock;
+    //createdSubBlock=new Block();
+    while(i<blocktokens.size()){
+        if(bracketsSatck.size()>0){
+            if(blocktokens[i]=="{" || blocktokens[i]=="("){
+                tokensQueue.push(blocktokens[i]);
+                bracketsSatck.push(blocktokens[i][0]);
+            }
+            else if(blocktokens[i]=="}" || blocktokens[i]==")"){
+                if((blocktokens[i]==")" && bracketsSatck.top()=='(' ) || (blocktokens[i]=="}" && bracketsSatck.top()=='{' )){
+                    bracketsSatck.pop();
+                }
+                else{
+                    throw std::runtime_error("brackets unmatched");
+                }
+                if(bracketsSatck.size()==0){
+                    while(tokensQueue.size()>0){
+                        createdSubBlock->snippetTokens.push_back(tokensQueue.front());
+                        tokensQueue.pop();
+                    }
+                    createdSubBlock->blockEndChar=blocktokens[i][0];
+                    block.subBlocks.push_back(*createdSubBlock);
+                }
+                else{
+                    tokensQueue.push(blocktokens[i]);
+                }
+            }
+            else{
+                tokensQueue.push(blocktokens[i]);
+            }
+        }
+        else if(blocktokens[i]=="{" || blocktokens[i]=="("){
+            if(tokensQueue.size()){
+                createdSubBlock=new Block();
+                while(!tokensQueue.empty()){
+                    createdSubBlock->snippetTokens.push_back(tokensQueue.front());
+                    tokensQueue.pop();
+                }
+                block.subBlocks.push_back(*createdSubBlock);
+            }
+            createdSubBlock=new Block();
+            createdSubBlock->blockStartChar=blocktokens[i][0];
+            bracketsSatck.push(blocktokens[i][0]);
+        }
+        else if(blocktokens[i]!="," && blocktokens[i]!=";" && blocktokens[i]!=":"){
+            tokensQueue.push(blocktokens[i]);
+        }
+        else{
+            createdSubBlock=new Block();
+            createdSubBlock->blockEndChar=blocktokens[i][0];
+            while(!tokensQueue.empty()){
+                createdSubBlock->snippetTokens.push_back(tokensQueue.front());
+                tokensQueue.pop();
+            }
+            createdSubBlock->blockStartChar='s';
+            block.subBlocks.push_back(*createdSubBlock);
+        }
+        i++;
+    }
+    if(!tokensQueue.empty()){
+        createdSubBlock=new Block();
+        while(!tokensQueue.empty()){
+            createdSubBlock->snippetTokens.push_back(tokensQueue.front());
+            tokensQueue.pop();
+        }
+        createdSubBlock->blockStartChar='s';
+        block.subBlocks.push_back(*createdSubBlock);   
+    }
+    for(Block &subBlock:block.subBlocks){
+        if(subBlock.blockStartChar!='s'){
+            cout<<"yes"<<endl;
+            generateNestedSubBlocks(subBlock);
+        }
+    }
+}
+//block class end
+
+
 enum CharTypes{
     Unknown,
     TextOrNumber,
@@ -11,6 +108,7 @@ unordered_map<char,CharTypes> CHAR_TYPE;
 bool isCharEmpty(char c){
     return !(CHAR_TYPE[c]==TextOrNumber || CHAR_TYPE[c]==SpecialChar);
 }
+
 int isStringEmpty(string &s){
     for(auto i :s){
         if(!isCharEmpty(i)){
@@ -19,6 +117,7 @@ int isStringEmpty(string &s){
     }
     return 1;
 }
+
 vector<string> &tokenize(string code){
     vector<string> &tokens=*(new vector<string>());
     string parser="";
@@ -105,7 +204,7 @@ void initCharTypes(){
     CHAR_TYPE['_']=TextOrNumber;
 
     char otherChars[]={'+','-','*','/','\\','%','!','<','>',',','.','\'',
-                        '"',';',':','[',']','{','}','(',')','^','&','|','?'};
+                        '"',';',':','[',']','{','}','(',')','^','&','|','?','='};
     for(char c:otherChars){
         CHAR_TYPE[c]=SpecialChar;
     }
@@ -114,17 +213,35 @@ void initCharTypes(){
     CHAR_TYPE['\t']=SpaceOrEndline;
     CHAR_TYPE['\r']=SpaceOrEndline;
 }
+
 void init(){
     initCharTypes();
 
 }
-
+void printBlock(Block b,int level=0){
+    if(b.blockStartChar=='s'){
+        for(int i=0;i<level;i++) cout<<"    ";
+        for (auto i:b.snippetTokens){
+            cout<<i<<" ";
+        }
+        cout<<endl;
+    }
+    else{
+        for(Block sb:b.subBlocks){
+            for(int i=0;i<level;i++) cout<<"    ";
+            cout<<sb.blockStartChar<<endl;
+            printBlock(sb,level+1);
+            for(int i=0;i<level;i++) cout<<"    ";
+            cout<<sb.blockEndChar<<endl;
+        }
+    }
+}
 int main(int argCnt,char **args) {
     init();
-    string examplecode="int  main(\"appke \nwo\nwo\\\' \"){}";
+    string examplecode="{}(code,apple;apple";
     vector<string> tokens=tokenize(examplecode);
-    for(auto i : tokens){
-        cout<<i<<endl;
-    }
+    Block codeBlocks(tokens);
+    generateNestedSubBlocks(codeBlocks);
+    printBlock(codeBlocks);
     return 0;
 }

@@ -1,0 +1,71 @@
+code is to be didivded into block model
+
+a block is a set of sub blocks and sinppets
+
+example:
+    word loop is followed by 2 blocks
+        A and B
+        A->A1,A2,A3 //for the style for(int i=0;i<n;i++)
+        or 
+        A->A1,A2 // for the style for( int i:x)
+
+        B would be the block code of the loop, that is {//what is code is being looped}
+    
+    word say would take arbitary number of blocks
+        S1,S2,S3,....Sn.
+        that would be like cout<<S1<<S2<<S3.....<<Sn;
+    
+This can be done using stacks or queue
+
+What defines as a Block:
+    (anything)-> One block
+    anything; -> One block //ending with a ; example any1;any2;any3; is 3 blocks
+    {anything} -> One block
+        :       -> also didivdes blocks
+    any1, ->One Block
+        (1) loop A1 A2 ->A1 is for conditions...etc and A2 is the actual block code
+                        Hence here loop word takes 2 blocks directly
+        (2) say A1,A2,A3; -> here all blocks till ; are for say only
+                            Here say word takes all blocks till a ; block ending
+    
+    Hence we must keep track of what blocks end as well.
+    
+    Example:
+        (a,b;c;d,e) {f:g(h,i j,(a+b),k;)}
+        would be
+            (
+                a ,
+                b ;
+                c ;
+                d ,
+                e ->deadEnd
+            )
+            {
+                f :
+                g ->deadEnd
+                (
+                    h ,
+                    [i,j] ,
+                    (
+                        [a,+,b] ->deadEnd
+                    ) ,
+                    k ;
+                )
+            }
+
+Block class templet:
+    vector<Blocks> *subBlocks;
+    int subBlocksCount;
+    vector<string> *snippetTokens;
+    char blockStartChar;
+    //start char can be of type '{', '(',',',':','b'->blocks, 's'->snippet(default)
+    char blcokEndChar;
+    //end char can be of type ')','}',';',':','d' ->deadEnd(default)
+
+A snippet is an undividible block, it has its content in snippetTokens
+
+Token to blocks can be done by recursion
+    create a top block with all tokens inintially in it
+    then call convertToNestedBlocks(block):
+                    mainintaining a stack try to create next elevel blocks and 
+                    do a recursive call on non snippet blocks.
